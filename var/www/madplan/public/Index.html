@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Madplan</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom Styles */
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .meal-plan h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .day-section {
+            margin-bottom: 40px;
+        }
+
+        .day-section h3 {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px;
+            margin: 0 0 10px 0;
+            border-radius: 4px;
+        }
+
+        .menu-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .menu-table th, .menu-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .menu-table th {
+            background-color: #f2f2f2;
+        }
+
+        .menu-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .menu-table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .dish-image {
+            width: 100px;
+            height: auto;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .dish-image:hover {
+            transform: scale(1.05);
+        }
+
+        .error-message {
+            color: red;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .loading {
+            display: block; /* Vises som standard */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2em;
+            color: #555;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #777;
+        }
+
+        footer a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Image */
+        @media (max-width: 576px) {
+            .dish-image {
+                width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Meal Plan Header -->
+        <div class="meal-plan">
+            <h1>Madplan</h1>
+            <div id="loading" class="loading">Indlæser madplan...</div>
+            <div id="weekly-plan" style="display: none;"></div>
+        </div>
+
+        <!-- Footer Section -->
+        <footer>
+            <p>&copy; 2024 - Madplan</p>
+            <p>Data hentet fra <a href="https://lunch.tosi.dk/api/v1/latest.json" target="_blank" rel="noopener">API'en</a></p>
+        </footer>        
+    </div>
+
+    <!-- Bootstrap JS (Includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Modal for Image Zoom -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Billede</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Luk"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="" alt="Ret billede" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript Code
+
+        // API URL via Proxy Server
+        const API_URL = 'http://localhost:3000/api/meals';
+
+        // Funktion til at hente madplanen fra API'en
+        async function fetchMealPlan() {
+            const loadingElement = document.getElementById('loading');
+            const weeklyPlanElement = document.getElementById('weekly-plan');
+
+            try {
+                const response = await fetch(API_URL);
+                console.log('Fetch response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP-fejl! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('API Data:', data);
+
+                generateMealPlan(data);
+            } catch (error) {
+                console.error('Fejl ved hentning af API-data:', error);
+                displayError(error);
+            } finally {
+                loadingElement.style.display = 'none'; // Skjul loading
+                weeklyPlanElement.style.display = 'block'; // Vis madplanen
+            }
+        }
+
+        // Funktion til at vise fejlbesked
+        function displayError(error) {
+            const weeklyPlanElement = document.getElementById('weekly-plan');
+            weeklyPlanElement.innerHTML = `
+                <div class="error-message">
+                    <p>Der opstod en fejl ved indlæsning af madplanen. Prøv igen senere.</p>
+                    <p><strong>Fejlbesked:</strong> ${error.message}</p>
+                </div>
+            `;
+        }
+
+        // Funktion til at generere madplanen UI
+        function generateMealPlan(data) {
+            const weeklyPlanElement = document.getElementById('weekly-plan');
+
+            // Ryd eksisterende indhold
+            weeklyPlanElement.innerHTML = '';
+
+            console.log('Genererer madplan for uge:', data.Weeknumber);
+            console.log('Menu:', data.Menu);
+
+            // Udtræk ugenummer og tidsstempel
+            const weekNumber = data.Weeknumber;
+            const timestampMatch = data.Timestamp.value.match(/\d+/);
+            const timestamp = timestampMatch ? new Date(parseInt(timestampMatch[0])).toLocaleString('da-DK', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }) : 'Ukendt';
+
+            // Opret og tilføj ugeheader
+            const weekHeader = document.createElement('h2');
+            weekHeader.textContent = `Uge ${weekNumber}`;
+            weeklyPlanElement.appendChild(weekHeader);
+
+            // Opret og tilføj tidsstempel
+            const timestampPara = document.createElement('p');
+            timestampPara.textContent = `Opdateret: ${timestamp}`;
+            weeklyPlanElement.appendChild(timestampPara);
+
+            // Loop gennem hver dag i menuen
+            data.Menu.forEach(dayMenu => {
+                // Opret en sektion for hver dag
+                const daySection = document.createElement('div');
+                daySection.classList.add('day-section');
+
+                // Opret og tilføj dagsheader
+                const dayHeader = document.createElement('h3');
+                dayHeader.textContent = dayMenu.Day;
+                daySection.appendChild(dayHeader);
+
+                // Opret en tabel for dagens menu
+                const table = document.createElement('table');
+                table.classList.add('menu-table', 'table', 'table-striped', 'table-hover');
+
+                // Opret tabel headers
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                ['Type', 'Ret', 'Allergener', 'Billede'].forEach(text => {
+                    const th = document.createElement('th');
+                    th.textContent = text;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // Opret tabel body
+                const tbody = document.createElement('tbody');
+
+                // Loop gennem hver ret i dagens menu
+                dayMenu.Menu.forEach(dish => {
+                    const row = document.createElement('tr');
+
+                    // Type Cell
+                    const typeCell = document.createElement('td');
+                    typeCell.textContent = dish.Type;
+                    row.appendChild(typeCell);
+
+                    // Dish Cell
+                    const dishCell = document.createElement('td');
+                    dishCell.textContent = dish.Dish;
+                    row.appendChild(dishCell);
+
+                    // Allergener Cell
+                    const allergenCell = document.createElement('td');
+                    allergenCell.textContent = dish.Allergener;
+                    row.appendChild(allergenCell);
+
+                    // Billede Cell
+                    const imageCell = document.createElement('td');
+                    const img = document.createElement('img');
+                    img.classList.add('dish-image');
+                    img.alt = `${dish.Type} billede`;
+
+                    // Byg billed URL
+                    const dayNumber = dayMenu.DayIndex; // 1 for Mandag, 2 for Tirsdag, osv.
+                    const typeName = dish.Type.toLowerCase().replace(/\s+/g, '');
+                    const imageUrl = `http://lunch.tosi.dk/api/v1/assets/2024-41/${dayNumber}/${typeName}.png`;
+
+                    img.src = imageUrl;
+                    img.onerror = function() {
+                        this.onerror = null;
+                        this.src = `http://lunch.tosi.dk/api/v1/assets/2024-41/fallback.png`;
+                    };
+
+                    // Tilføj klik-event for at åbne modal
+                    img.addEventListener('click', () => {
+                        const modalImage = document.getElementById('modalImage');
+                        modalImage.src = img.src;
+                        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+                        imageModal.show();
+                    });
+
+                    imageCell.appendChild(img);
+                    row.appendChild(imageCell);
+
+                    tbody.appendChild(row);
+                });
+
+                table.appendChild(tbody);
+                daySection.appendChild(table);
+                weeklyPlanElement.appendChild(daySection);
+            });
+
+            console.log('Madplan genereret');
+        }
+
+        // Kald funktionen til at hente madplanen ved indlæsning
+        window.onload = fetchMealPlan;
+    </script>
+</body>
+</html>

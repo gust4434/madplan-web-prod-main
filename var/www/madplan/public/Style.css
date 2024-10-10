@@ -1,0 +1,95 @@
+/* Style.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.meal-plan h1 {
+    text-align: center;
+    color: #333;
+}
+
+.day-section {
+    margin-bottom: 40px;
+}
+
+.day-section h3 {
+    background-color: #007BFF;
+    color: #fff;
+    padding: 10px;
+    margin: 0;
+    border-radius: 4px;
+}
+
+.menu-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.menu-table th, .menu-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.menu-table th {
+    background-color: #f2f2f2;
+}
+
+.menu-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.menu-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.dish-image {
+    width: 100px;
+    height: auto;
+    border-radius: 4px;
+}
+
+.error-message {
+    color: red;
+    text-align: center;
+    font-weight: bold;
+}
+
+.loading {
+    display: none; /* Skjult som standard */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2em;
+    color: #555;
+}
+
+footer {
+    text-align: center;
+    margin-top: 40px;
+    color: #777;
+}
+
+footer a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
