@@ -22,13 +22,13 @@ app.get('/api/meals', async (req, res) => {
     try {
         const response = await fetch(API_URL);
         if (!response.ok) {
-            throw new Error(`HTTP-fejl! Status: ${response.status}`);
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
         res.json(data);
     } catch (error) {
-        console.error('Fejl ved hentning af API-data:', error);
-        res.status(500).json({ error: 'Fejl ved hentning af madplanen.' });
+        console.error('Error fetching API data:', error);
+        res.status(500).json({ error: 'Error fetching meal plan.' });
     }
 });
 
@@ -38,5 +38,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Proxy server kører på http://localhost:${PORT}`);
+    console.log(`Proxy server running at http://localhost:${PORT}`);
 });
